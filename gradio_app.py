@@ -1,7 +1,4 @@
-"""Local LLM chatbot, Gradio version (Task 1).  Start with:  python gradio_app.py
-
-Same engine and tools as the Streamlit app (app.py); only the UI layer differs.
-"""
+"""Local LLM chatbot (Task 1).  Start with:  python gradio_app.py"""
 
 from __future__ import annotations
 

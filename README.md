@@ -5,7 +5,7 @@ the git repository has **no remote** and the chatbot never sends data off the ma
 
 | Task | What | Where |
 |---|---|---|
-| 1 | Local GPU-accelerated LLM chatbot (Ollama; Streamlit **or** Gradio UI) | [`app.py`](app.py), [`gradio_app.py`](gradio_app.py), [`src/chatbot/`](src/chatbot) |
+| 1 | Local GPU-accelerated LLM chatbot (Gradio + Ollama) | [`gradio_app.py`](gradio_app.py), [`src/chatbot/`](src/chatbot) |
 | 2 | Binary classification of `Type` | [`src/classification/`](src/classification), [`reports/task2/`](reports/task2) |
 | 3 | 5 alternatives per part from `DESCRIPTION` + chatbot integration | [`src/parts/`](src/parts), [`reports/task3/`](reports/task3) |
 | 4 | Hour difference between two timestamps | [`src/timediff/timediff.py`](src/timediff/timediff.py) `hours_between` |
@@ -22,8 +22,7 @@ ollama serve &                       # skip if the Ollama app is running
 ollama pull gemma4:e2b-it-qat        # chat model, ~1.7 GB in GPU memory
 ollama pull embeddinggemma-2:270m    # only needed for the optional embedding evaluation
 
-streamlit run app.py                 # Task 1 + 3, Streamlit UI -> http://localhost:8501
-python gradio_app.py                 # Task 1 + 3, Gradio UI    -> http://127.0.0.1:7860
+python gradio_app.py                 # Task 1 + 3 -> http://127.0.0.1:7860
 python -m src.classification.train   # Task 2  (~1 min)
 python -m src.parts.eda              # Task 3: descriptive analysis
 python -m src.parts.find_alternatives  # Task 3: reports/task3/alternatives.csv
@@ -43,7 +42,7 @@ pytest                               # 33 tests (tasks 1, 3, 4, 5)
 
 `ollama ps` reports the model as **`100% GPU`**: all layers are offloaded to the M1 GPU through Metal.
 Measured generation speed is **~29–30 tokens/s**, and a typical tool-using answer arrives in 5–12 s.
-The app shows tokens/s for every reply in the sidebar.
+The app shows tokens/s for every reply in the settings panel.
 
 ---
 
@@ -51,34 +50,25 @@ The app shows tokens/s for every reply in the sidebar.
 
 ### Features (focus on ease of use)
 - Familiar chat layout with **streaming** answers and clickable **example prompts** on an empty chat.
-- **Tool transparency.** When the model looks something up, an expandable "🔧 Tool used" box shows the arguments and the raw result. You can see where an answer came from instead of having to trust it.
-- Sidebar controls: model picker (any locally pulled Ollama model), tools on/off, an optional *reasoning mode* (Gemma's thinking, which can also be shown), a temperature slider, an editable system prompt, **New chat**, and **Export** to Markdown.
+- **Tool transparency.** When the model looks something up, a collapsible "🔧 Tool used" message in the chat shows the arguments and the raw result. You can see where an answer came from instead of having to trust it.
+- Settings panel: model picker (any locally pulled Ollama model), tools on/off, an optional *reasoning mode* (Gemma's thinking, which can also be shown), a temperature slider, an editable system prompt, **New chat**, and **Export** to Markdown.
 - Clear error messages for the usual setup problems, e.g. Ollama not running or no model pulled, each with the command that fixes it.
 - Speed statistics (tokens, tok/s, seconds) for the last reply.
 
-### Two interchangeable UIs
-Both front-ends offer the same features and share the engine and tools; pick whichever you prefer.
-- **Streamlit (`app.py`):** sidebar layout, with tool calls in expanders.
-- **Gradio (`gradio_app.py`):**
-  - chat panel with a settings column;
-  - tool calls and reasoning shown as collapsible "🔧 Tool used" / "💭 Reasoning" bubbles inside the chat;
-  - built-in copy buttons;
-  - New chat and Markdown export.
-
-  It binds to `127.0.0.1` only, and `share=False`, so it is never exposed publicly. It also gets an automatic API (`gradio_client`), which is useful for scripting and tests.
+- Built-in copy buttons; reasoning (when shown) appears as a collapsible "💭 Reasoning" message.
+- The app binds to `127.0.0.1` only, with `share=False`, so it is never exposed publicly. Gradio also gives it an automatic API (`gradio_client`), which is useful for scripting and tests.
 
 ### Architecture
 ```
-app.py (Streamlit UI) ─┐
-gradio_app.py (Gradio) ┴►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
-                                  │  tool calls
-                                  ▼
-                           src/chatbot/tools.py  ──►  src/parts (Task 3), src/timediff (Tasks 4/5)
+gradio_app.py (Gradio UI)  ──►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
+                                      │  tool calls
+                                      ▼
+                               src/chatbot/tools.py  ──►  src/parts (Task 3), src/timediff (Tasks 4/5)
 ```
 `engine.chat_stream` does not depend on the UI. It streams events (`content`, `thinking`, `tool`, `stats`)
 and runs the tool-call loop: when the model asks for a tool, the engine executes it, feeds the result
 back and continues, for up to 4 rounds. This keeps the UI thin and lets the engine be unit-tested with a
-fake client (`tests/test_engine.py`).
+fake client (`tests/test_engine.py`, `tests/test_gradio_app.py`).
 
 ### Model choice: `gemma4:e2b-it-qat` (Google Gemma 4 "E2B", instruction-tuned, quantisation-aware 4-bit)
 - **Fits the hardware.** With 8 GB of *shared* memory, the model has to leave room for macOS, the browser and Python. E2B uses about 1.7 GB of GPU memory (4.6 B parameters stored, ~2 B "effective" per token). 7–8 B models (Llama 3.1 8B, Qwen 2.5 7B) need about 5 GB at Q4 and would cause swapping.
@@ -90,13 +80,13 @@ fake client (`tests/test_engine.py`).
   - *Qwen 2.5 3B*: comparable.
   - *Phi-3.5 mini*: no native tool calling in Ollama.
 
-  The model is chosen in the sidebar, so you can swap in any other pulled model without changing code.
+  The model is chosen in the settings panel, so you can swap in any other pulled model without changing code.
 
 ### Package choices
 | Package | Why |
 |---|---|
 | **Ollama** (github.com/ollama/ollama) + `ollama` Python client (PyPI, official) | The most widely used local LLM runtime. It is built on llama.cpp with first-class Apple Metal support, handles model download, quantised weights and memory management, and its client turns plain Python functions with docstrings into tool schemas. Alternatives: `llama-cpp-python` (more manual setup), Hugging Face `transformers` + PyTorch MPS (much slower and more memory-hungry on 8 GB), MLX (Apple-only, weaker tool-calling support). |
-| **Streamlit** / **Gradio** (PyPI) | Both have ready-made chat components (`st.chat_message` / `gr.Chatbot`) with streaming, and keep the app in pure Python with no front-end build. Streamlit gives more layout control. Gradio shows tool calls and reasoning as collapsible chat messages and comes with an API client. |
+| **Gradio** (PyPI) | Ready-made chat component (`gr.Chatbot`) with streaming and collapsible tool/reasoning messages, pure Python with no front-end build, and an automatic API client for testing. Streamlit was considered (and prototyped) but Gradio's in-chat tool messages and API client fit a tool-using chatbot better. |
 | pandas, NumPy, scikit-learn, matplotlib, pytest | Standard, well-maintained scientific Python stack (PyPI). Versions are pinned in `requirements.txt`. |
 
 ### Version control
