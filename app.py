@@ -122,6 +122,7 @@ def build() -> gr.Blocks:
                 gr.Markdown(f"# 💬 Local Chatbot\nPowered by local LLMs on your own GPU via Ollama")
                 chatbot = gr.Chatbot(
                     height=560,
+                    show_label=False,
                     placeholder="**Ask anything** — or try an example below.",
                     buttons=["copy"],
                     avatar_images=(None, None),
