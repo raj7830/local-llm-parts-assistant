@@ -5,7 +5,7 @@ the git repository has **no remote** and the chatbot never sends data off the ma
 
 | Task | What | Where |
 |---|---|---|
-| 1 | Local GPU-accelerated LLM chatbot (Gradio + Ollama) | [`gradio_app.py`](gradio_app.py), [`src/chatbot/`](src/chatbot) |
+| 1 | Local GPU-accelerated LLM chatbot (Gradio + Ollama) | [`app.py`](app.py), [`src/chatbot/`](src/chatbot) |
 | 2 | Binary classification of `Type` | [`src/classification/`](src/classification), [`reports/task2/`](reports/task2) |
 | 3 | 5 alternatives per part from `DESCRIPTION` + chatbot integration | [`src/parts/`](src/parts), [`reports/task3/`](reports/task3) |
 | 4 | Hour difference between two timestamps | [`src/timediff/timediff.py`](src/timediff/timediff.py) `hours_between` |
@@ -22,7 +22,7 @@ ollama serve &                       # skip if the Ollama app is running
 ollama pull gemma4:e2b-it-qat        # chat model, ~1.7 GB in GPU memory
 ollama pull embeddinggemma-2:270m    # only needed for the optional embedding evaluation
 
-python gradio_app.py                 # Task 1 + 3 -> http://127.0.0.1:7860
+python app.py                        # Task 1 + 3 -> http://127.0.0.1:7860
 python -m src.classification.train   # Task 2  (~1 min)
 python -m src.parts.eda              # Task 3: descriptive analysis
 python -m src.parts.find_alternatives  # Task 3: reports/task3/alternatives.csv
@@ -60,15 +60,15 @@ The app shows tokens/s for every reply in the settings panel.
 
 ### Architecture
 ```
-gradio_app.py (Gradio UI)  ──►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
-                                      │  tool calls
-                                      ▼
-                               src/chatbot/tools.py  ──►  src/parts (Task 3), src/timediff (Tasks 4/5)
+app.py (Gradio UI)  ──►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
+                               │  tool calls
+                               ▼
+                        src/chatbot/tools.py  ──►  src/parts (Task 3), src/timediff (Tasks 4/5)
 ```
 `engine.chat_stream` does not depend on the UI. It streams events (`content`, `thinking`, `tool`, `stats`)
 and runs the tool-call loop: when the model asks for a tool, the engine executes it, feeds the result
 back and continues, for up to 4 rounds. This keeps the UI thin and lets the engine be unit-tested with a
-fake client (`tests/test_engine.py`, `tests/test_gradio_app.py`).
+fake client (`tests/test_engine.py`, `tests/test_app.py`).
 
 ### Model choice: `gemma4:e2b-it-qat` (Google Gemma 4 "E2B", instruction-tuned, quantisation-aware 4-bit)
 - **Fits the hardware.** With 8 GB of *shared* memory, the model has to leave room for macOS, the browser and Python. E2B uses about 1.7 GB of GPU memory (4.6 B parameters stored, ~2 B "effective" per token). 7–8 B models (Llama 3.1 8B, Qwen 2.5 7B) need about 5 GB at Q4 and would cause swapping.

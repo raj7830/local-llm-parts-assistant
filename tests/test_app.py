@@ -1,13 +1,13 @@
 """Gradio UI handler test with the fake Ollama client from test_engine (no server needed)."""
 
-import gradio_app
+import app
 from tests.test_engine import FakeClient
 
 
 def test_respond_streams_tool_and_answer(monkeypatch):
-    monkeypatch.setattr(gradio_app, "client", FakeClient())
-    monkeypatch.setattr(gradio_app, "TOOLS", {"add": lambda a, b: str(a + b)})
-    *_, (display, history, stats, box) = gradio_app.respond(
+    monkeypatch.setattr(app, "client", FakeClient())
+    monkeypatch.setattr(app, "TOOLS", {"add": lambda a, b: str(a + b)})
+    *_, (display, history, stats, box) = app.respond(
         "2+3?", [], [], "m", True, False, False, 0.3, "sys"
     )
     assert [m["role"] for m in display] == ["user", "assistant", "assistant"]
@@ -18,5 +18,5 @@ def test_respond_streams_tool_and_answer(monkeypatch):
 
 
 def test_empty_prompt_is_ignored():
-    out = list(gradio_app.respond("  ", [], [], "m", True, False, False, 0.3, "sys"))
+    out = list(app.respond("  ", [], [], "m", True, False, False, 0.3, "sys"))
     assert out[0][0] == [] and out[0][1] == []
