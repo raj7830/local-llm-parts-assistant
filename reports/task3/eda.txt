@@ -1,0 +1,63 @@
+Rows: 998, columns: 32, unique IDs: 998
+DESCRIPTION missing: 335 (33.6%)
+Rows with no information at all besides ID: 6
+Non-empty descriptions: 663, distinct: 582, rows sharing an identical description with another part: 126
+Description length (chars): median 165, min 43, max 205
+
+Missing values per column (%):
+ID                                  0.0
+Size                               11.8
+Rating                             16.4
+Application                        17.7
+LC Risk                            21.2
+Mounting                           22.4
+Material                           22.7
+Attribut1                          22.8
+Product Length                     23.8
+Number of Terminals                24.0
+Maximum AC Voltage Rating          26.5
+Operating Temperature-Max (Cel)    29.2
+Length in mm                       29.4
+Height                             29.4
+Operating Temperature-Min (Cel)    29.7
+Mounting Feature                   32.0
+Rated Current (A)                  32.6
+Characteristic                     32.7
+Physical Dimension                 33.1
+DESCRIPTION                        33.6
+Joule-integral-Nom (J)             33.6
+Rated Breaking Capacity (A)        34.4
+Rated Voltage(AC) (V)              43.5
+Code                               44.4
+Rated Voltage(DC) (V)              54.2
+Maximum DC Voltage Rating          55.1
+Rated Voltage (V)                  56.0
+Temp                               58.2
+Additional Feature                 67.5
+Product Diameter                   72.7
+Maximum Power Dissipation          74.6
+Pre-arcing time-Min (ms)           89.2
+
+Part families (first two words of DESCRIPTION):
+DESCRIPTION
+Indicator Chip      343
+Indicator Red       171
+Indicator SubRed     73
+Indicator Holder     18
+Indicators PN         9
+Indicator Blade       7
+Non Resettable        6
+Red Indicator,        4
+
+Current stated twice in 517 descriptions, contradicting in 13:
+179    Indicator SubRed Slow Blow Movement 0.62A 250V...
+259    Indicator Red Fast Movement 0.063A 250V Holder...
+262    Indicator Red Fast Movement 0.08A 250V Holder ...
+Blow speed stated twice in 476 descriptions, contradicting in 98
+
+Inconsistent unit formatting, e.g. Size column:
+Size
+5 X 20mm    187
+5x20mm       54
+Units embedded in values, e.g.: ['125Cel', '85Cel', '105Cel'] ['1.6A', '6.3A', '8A']
+Rated current spans 0.031A - 35.0A (52 distinct values)
