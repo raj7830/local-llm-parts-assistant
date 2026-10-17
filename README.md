@@ -50,7 +50,10 @@ pip install -r requirements.txt
 # 2. Get the model
 ollama pull gemma4:e2b-it-qat
 
-# 3. Run
+# 3. Add the datasets (see data/README.md)
+cp /path/to/{table_1,table_2,Parts}.csv data/
+
+# 4. Run
 python app.py        # → http://127.0.0.1:7860
 ```
 
@@ -88,7 +91,7 @@ docs/                full documentation, diagrams, screenshots
 ## 🧪 Tests
 
 ```bash
-pytest               # 33 tests, no GPU or Ollama needed
+pytest               # 33 tests, no GPU or Ollama needed (part-search tests skip without the data)
 ```
 
 ## 📖 Documentation

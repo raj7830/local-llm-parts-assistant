@@ -2,11 +2,13 @@ import numpy as np
 import pytest
 
 from src.parts import PartsSimilarity, load_parts
-from src.parts.similarity import normalise, parse_current
+from src.parts.similarity import DATA_PATH, normalise, parse_current
 
 
 @pytest.fixture(scope="module")
 def model():
+    if not DATA_PATH.exists():
+        pytest.skip("data/Parts.csv not present")
     return PartsSimilarity().fit(load_parts())
 
 
