@@ -1,0 +1,17 @@
+flowchart LR
+    A[("table_1.csv<br/>4,070 rows")] --> D1["drop 370<br/>exact duplicates"]
+    B[("table_2.csv<br/>4,070 rows")] --> D2["drop 370<br/>exact duplicates"]
+    D1 --> J{{"1:1 join on ID<br/>3,700 rows"}}
+    D2 --> J
+    J --> F["drop redundant<br/>ERZ = GJAH relabel<br/>LPI = NKJUD × 10⁴"]
+    F --> PRE["impute + 'missing' category<br/>one-hot · log1p · scale"]
+    PRE --> S["stratified 80/20 split"]
+    S --> CV["5-fold CV on train<br/>LogReg · RF · HistGB<br/>class weights"]
+    CV --> TH["pick model by PR-AUC<br/>tune threshold (F1) on OOF"]
+    TH --> TE["hold-out test<br/>RF: F1(n)=0.93 · PR-AUC 0.97"]
+    classDef data fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    classDef step fill:#ecfdf5,stroke:#10b981,color:#064e3b
+    classDef out fill:#eef2ff,stroke:#6366f1,color:#1e1b4b
+    class A,B data
+    class D1,D2,J,F,PRE,S,CV,TH step
+    class TE out

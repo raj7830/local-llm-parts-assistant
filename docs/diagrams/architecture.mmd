@@ -1,0 +1,19 @@
+flowchart LR
+    U(["👤 User<br/>browser"]) <-->|"chat"| UI["<b>app.py</b><br/>Gradio UI<br/>127.0.0.1:7860"]
+    UI <-->|"messages, settings"| E["<b>engine.py</b><br/>streaming + tool-call loop"]
+    E <-->|"HTTP stream"| O["<b>Ollama</b><br/>gemma4:e2b-it-qat<br/>Apple M1 GPU · Metal"]
+    E -->|"tool call"| T["<b>tools.py</b>"]
+    T -->|"JSON result"| E
+    T --> P["<b>src/parts</b><br/>Task 3 · part similarity"]
+    T --> H["<b>src/timediff</b><br/>Tasks 4 & 5 · (working) hours"]
+    P --- D[("Parts.csv")]
+    C["<b>src/classification</b><br/>Task 2 · Type classifier"] --- D2[("table_1.csv<br/>table_2.csv")]
+    C --> R["reports/task2"]
+    classDef ui fill:#eef2ff,stroke:#6366f1,color:#1e1b4b
+    classDef core fill:#ecfdf5,stroke:#10b981,color:#064e3b
+    classDef llm fill:#fff7ed,stroke:#f97316,color:#7c2d12
+    classDef data fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    class U,UI ui
+    class E,T,P,H,C core
+    class O llm
+    class D,D2,R data

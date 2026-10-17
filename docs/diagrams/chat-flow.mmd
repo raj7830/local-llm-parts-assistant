@@ -1,0 +1,18 @@
+sequenceDiagram
+    autonumber
+    actor U as User
+    participant UI as Gradio UI
+    participant E as Chat engine
+    participant L as Ollama (GPU)
+    participant T as Tools
+    U->>UI: "Suggest 3 alternatives for part A100"
+    UI->>E: history + settings
+    E->>L: chat(messages, tools, stream)
+    L-->>E: tool_call find_alternative_parts(A100, k=3)
+    E->>T: run tool
+    T-->>E: JSON (IDs, scores, descriptions)
+    E-->>UI: 🔧 "Tool used" message
+    E->>L: chat(messages + tool result)
+    L-->>E: streamed answer tokens
+    E-->>UI: markdown table, streamed
+    UI-->>U: answer + tok/s stats

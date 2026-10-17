@@ -1,0 +1,22 @@
+flowchart LR
+    P[("Parts.csv<br/>998 parts")] --> Q{"DESCRIPTION<br/>present?"}
+    Q -->|"yes (663)"| N["normalise text<br/>units · 5 X 20mm→5x20mm<br/>synonyms"]
+    Q -->|"no (335)"| SY["synthesise text from<br/>structured attributes"]
+    SY --> N
+    N --> W["TF-IDF<br/>word 1–2-grams"]
+    N --> CH["TF-IDF<br/>char 3–5-grams"]
+    N --> CU["parse rated current (A)"]
+    W --> COS["cosine similarity"]
+    CH --> COS
+    CU --> RAT["min/max ratio"]
+    COS --> SC["score = 0.7·text + 0.3·current"]
+    RAT --> SC
+    SC --> TOP["top-5 alternatives<br/>(self excluded)"]
+    TOP --> CSV["alternatives.csv"]
+    TOP --> BOT["chatbot tool<br/>find_alternative_parts / search_parts"]
+    classDef data fill:#f8fafc,stroke:#94a3b8,color:#0f172a
+    classDef step fill:#ecfdf5,stroke:#10b981,color:#064e3b
+    classDef out fill:#eef2ff,stroke:#6366f1,color:#1e1b4b
+    class P data
+    class Q,N,SY,W,CH,CU,COS,RAT,SC step
+    class TOP,CSV,BOT out

@@ -1,0 +1,16 @@
+flowchart LR
+    I["start, end<br/>'YYYY/MM/DD HH:MM'"] --> PA["parse + validate<br/>sort (order-independent)"]
+    PA --> M{"function"}
+    M -->|"hours_between"| D["end − start"]
+    M -->|"business_hours_between"| L["for each calendar day"]
+    L --> WD{"weekday and<br/>not a holiday?"}
+    WD -->|"no"| SK["skip"]
+    WD -->|"yes"| CL["clip to 09:00–17:00<br/>add overlap"]
+    CL --> SUM["sum seconds"]
+    SK --> SUM
+    D --> R["round half-up to whole hours"]
+    SUM --> R
+    classDef step fill:#ecfdf5,stroke:#10b981,color:#064e3b
+    classDef out fill:#eef2ff,stroke:#6366f1,color:#1e1b4b
+    class PA,D,L,CL,SUM,SK,WD,M step
+    class I,R out
