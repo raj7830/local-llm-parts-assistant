@@ -96,7 +96,7 @@ fake client (`tests/test_engine.py`).
 | Package | Why |
 |---|---|
 | **Ollama** (github.com/ollama/ollama) + `ollama` Python client (PyPI, official) | The most widely used local LLM runtime. It is built on llama.cpp with first-class Apple Metal support, handles model download, quantised weights and memory management, and its client turns plain Python functions with docstrings into tool schemas. Alternatives: `llama-cpp-python` (more manual setup), Hugging Face `transformers` + PyTorch MPS (much slower and more memory-hungry on 8 GB), MLX (Apple-only, weaker tool-calling support). |
-| **Streamlit** / **Gradio** (PyPI) | Both have ready-made chat components (Gradio: `gr.Chatbot` with collapsible tool and reasoning messages). Streamlit has (`st.chat_message`, `st.chat_input`) and streaming, and keeps the app in pure Python with no front-end build. Gradio would also work; Streamlit gives more layout control for the sidebar and tool expanders. |
+| **Streamlit** / **Gradio** (PyPI) | Both have ready-made chat components (`st.chat_message` / `gr.Chatbot`) with streaming, and keep the app in pure Python with no front-end build. Streamlit gives more layout control. Gradio shows tool calls and reasoning as collapsible chat messages and comes with an API client. |
 | pandas, NumPy, scikit-learn, matplotlib, pytest | Standard, well-maintained scientific Python stack (PyPI). Versions are pinned in `requirements.txt`. |
 
 ### Version control
