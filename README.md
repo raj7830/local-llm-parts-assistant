@@ -5,7 +5,7 @@ the git repository has **no remote** and the chatbot never sends data off the ma
 
 | Task | What | Where |
 |---|---|---|
-| 1 | Local GPU-accelerated LLM chatbot (Streamlit + Ollama) | [`app.py`](app.py), [`src/chatbot/`](src/chatbot) |
+| 1 | Local GPU-accelerated LLM chatbot (Ollama; Streamlit **or** Gradio UI) | [`app.py`](app.py), [`gradio_app.py`](gradio_app.py), [`src/chatbot/`](src/chatbot) |
 | 2 | Binary classification of `Type` | [`src/classification/`](src/classification), [`reports/task2/`](reports/task2) |
 | 3 | 5 alternatives per part from `DESCRIPTION` + chatbot integration | [`src/parts/`](src/parts), [`reports/task3/`](reports/task3) |
 | 4 | Hour difference between two timestamps | [`src/timediff/timediff.py`](src/timediff/timediff.py) `hours_between` |
@@ -22,12 +22,13 @@ ollama serve &                       # skip if the Ollama app is running
 ollama pull gemma4:e2b-it-qat        # chat model, ~1.7 GB in GPU memory
 ollama pull embeddinggemma-2:270m    # only needed for the optional embedding evaluation
 
-streamlit run app.py                 # Task 1 + 3 -> http://localhost:8501
+streamlit run app.py                 # Task 1 + 3, Streamlit UI -> http://localhost:8501
+python gradio_app.py                 # Task 1 + 3, Gradio UI    -> http://127.0.0.1:7860
 python -m src.classification.train   # Task 2  (~1 min)
 python -m src.parts.eda              # Task 3: descriptive analysis
 python -m src.parts.find_alternatives  # Task 3: reports/task3/alternatives.csv
 python -m src.parts.evaluate --embeddings  # Task 3: compare similarity variants
-pytest                               # 31 tests (tasks 1, 3, 4, 5)
+pytest                               # 33 tests (tasks 1, 3, 4, 5)
 ```
 
 ## Machine used
@@ -55,9 +56,21 @@ The app shows tokens/s for every reply in the sidebar.
 - Clear error messages for the usual setup problems, e.g. Ollama not running or no model pulled, each with the command that fixes it.
 - Speed statistics (tokens, tok/s, seconds) for the last reply.
 
+### Two interchangeable UIs
+Both front-ends offer the same features and share the engine and tools; pick whichever you prefer.
+- **Streamlit (`app.py`):** sidebar layout, with tool calls in expanders.
+- **Gradio (`gradio_app.py`):**
+  - chat panel with a settings column;
+  - tool calls and reasoning shown as collapsible "🔧 Tool used" / "💭 Reasoning" bubbles inside the chat;
+  - built-in copy buttons;
+  - New chat and Markdown export.
+
+  It binds to `127.0.0.1` only, and `share=False`, so it is never exposed publicly. It also gets an automatic API (`gradio_client`), which is useful for scripting and tests.
+
 ### Architecture
 ```
-app.py (Streamlit UI)  ──►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
+app.py (Streamlit UI) ─┐
+gradio_app.py (Gradio) ┴►  src/chatbot/engine.py  ──►  Ollama server (localhost:11434, Metal GPU)
                                   │  tool calls
                                   ▼
                            src/chatbot/tools.py  ──►  src/parts (Task 3), src/timediff (Tasks 4/5)
@@ -83,7 +96,7 @@ fake client (`tests/test_engine.py`).
 | Package | Why |
 |---|---|
 | **Ollama** (github.com/ollama/ollama) + `ollama` Python client (PyPI, official) | The most widely used local LLM runtime. It is built on llama.cpp with first-class Apple Metal support, handles model download, quantised weights and memory management, and its client turns plain Python functions with docstrings into tool schemas. Alternatives: `llama-cpp-python` (more manual setup), Hugging Face `transformers` + PyTorch MPS (much slower and more memory-hungry on 8 GB), MLX (Apple-only, weaker tool-calling support). |
-| **Streamlit** (PyPI) | It has ready-made chat components (`st.chat_message`, `st.chat_input`) and streaming, and keeps the app in pure Python with no front-end build. Gradio would also work; Streamlit gives more layout control for the sidebar and tool expanders. |
+| **Streamlit** / **Gradio** (PyPI) | Both have ready-made chat components (Gradio: `gr.Chatbot` with collapsible tool and reasoning messages). Streamlit has (`st.chat_message`, `st.chat_input`) and streaming, and keeps the app in pure Python with no front-end build. Gradio would also work; Streamlit gives more layout control for the sidebar and tool expanders. |
 | pandas, NumPy, scikit-learn, matplotlib, pytest | Standard, well-maintained scientific Python stack (PyPI). Versions are pinned in `requirements.txt`. |
 
 ### Version control
