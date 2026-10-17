@@ -1,7 +1,7 @@
 # Project Documentation
 
 A fully local, GPU-accelerated LLM chatbot that can look up alternative parts and compute working hours.
-The project also includes a binary classifier and the data analysis behind each task.
+The project also includes a binary classifier and the data analysis behind each component.
 
 ![Chatbot answering a parts question with a tool call](images/chatbot.png)
 
@@ -10,10 +10,10 @@ The project also includes a binary classifier and the data analysis behind each 
 2. [System architecture](#2-system-architecture)
 3. [Machine and performance](#3-machine-and-performance)
 4. [Setup and usage](#4-setup-and-usage)
-5. [Task 1: Chatbot](#5-task-1-chatbot)
-6. [Task 2: Classification of `Type`](#6-task-2-classification-of-type)
-7. [Task 3: Alternative parts](#7-task-3-alternative-parts)
-8. [Tasks 4 & 5: Hour differences](#8-tasks-4--5-hour-differences)
+5. [Chatbot](#5-chatbot)
+6. [Binary classification](#6-binary-classification)
+7. [Part similarity search](#7-part-similarity-search)
+8. [Time calculations](#8-time-calculations)
 9. [Testing and quality](#9-testing-and-quality)
 10. [Project structure](#10-project-structure)
 11. [Limitations and next steps](#11-limitations-and-next-steps)
@@ -22,13 +22,12 @@ The project also includes a binary classifier and the data analysis behind each 
 
 ## 1. Overview
 
-| Task | Deliverable | Code |
+| Component | What it does | Code |
 |---|---|---|
-| 1 | Local LLM chatbot with a Gradio UI, running on the GPU via Ollama | `app.py`, `src/chatbot/` |
-| 2 | Binary classifier for `Type` from two joined tables | `src/classification/` |
-| 3 | Descriptive analysis + 5 alternatives per part, integrated into the chatbot | `src/parts/` |
-| 4 | Rounded hour difference between two timestamps | `src/timediff/` |
-| 5 | Same, counting only 09:00–17:00 on weekdays | `src/timediff/` |
+| Chatbot | Local LLM chatbot with a Gradio UI, running on the GPU via Ollama | `app.py`, `src/chatbot/` |
+| Binary classification | Predicts `Type` from two tables joined on `ID` | `src/classification/` |
+| Part similarity search | Descriptive analysis plus 5 alternatives per part, available in the chatbot | `src/parts/` |
+| Time calculations | Rounded hours between two timestamps, in total or working hours only (09:00–17:00, weekdays) | `src/timediff/` |
 
 **Design principles**
 - **Local first.** The model, the data and the UI all stay on the machine. The app binds to `127.0.0.1` and the git repository has no remote.
@@ -47,9 +46,9 @@ The project also includes a binary classifier and the data analysis behind each 
 | `app.py` | Gradio UI: chat panel, settings, examples, export. Holds no business logic. |
 | `src/chatbot/engine.py` | Streams model output and runs the **tool-call loop** (up to 4 rounds). Does not depend on any UI. |
 | `src/chatbot/tools.py` | Plain Python functions exposed to the LLM. Their docstrings become the tool schemas. |
-| `src/parts/` | Task 3: similarity index, EDA, evaluation, batch export. |
-| `src/timediff/` | Tasks 4 & 5: hour calculations. |
-| `src/classification/` | Task 2: data cleaning and joining, model training and evaluation. |
+| `src/parts/` | Part similarity: index, EDA, evaluation, batch export. |
+| `src/timediff/` | Hour and working-hour calculations. |
+| `src/classification/` | Classification: data cleaning and joining, model training and evaluation. |
 | Ollama | Local model server (llama.cpp + Apple Metal) on `localhost:11434`. |
 
 ### How one chat request flows
@@ -96,7 +95,7 @@ pip install -r requirements.txt
 # 2. Local LLM runtime (macOS: `brew install ollama` or the Ollama app)
 ollama serve &                        # skip if the Ollama app is running
 ollama pull gemma4:e2b-it-qat         # chat model
-ollama pull embeddinggemma-2:270m     # optional, only for the embedding comparison in Task 3
+ollama pull embeddinggemma-2:270m     # optional, only for the embedding comparison
 
 # 3. Run
 python app.py                         # chatbot -> http://127.0.0.1:7860
@@ -105,15 +104,15 @@ python app.py                         # chatbot -> http://127.0.0.1:7860
 | Command | Purpose | Output |
 |---|---|---|
 | `python app.py` | Start the chatbot | http://127.0.0.1:7860 |
-| `python -m src.classification.train` | Train and evaluate Task 2 models (~1 min) | `reports/task2/` |
-| `python -m src.parts.eda` | Task 3 descriptive analysis | stdout (`reports/task3/eda.txt`) |
-| `python -m src.parts.find_alternatives` | 5 alternatives for every part | `reports/task3/alternatives.csv` |
-| `python -m src.parts.evaluate --embeddings` | Compare similarity variants | stdout (`reports/task3/evaluation.txt`) |
+| `python -m src.classification.train` | Train and evaluate the classifiers (~1 min) | `reports/classification/` |
+| `python -m src.parts.eda` | Descriptive analysis of the parts data | stdout (`reports/parts/eda.txt`) |
+| `python -m src.parts.find_alternatives` | 5 alternatives for every part | `reports/parts/alternatives.csv` |
+| `python -m src.parts.evaluate --embeddings` | Compare similarity variants | stdout (`reports/parts/evaluation.txt`) |
 | `pytest` | Run all tests | 33 tests |
 
 ---
 
-## 5. Task 1: Chatbot
+## 5. Chatbot
 
 ### 5.1 User interface
 
@@ -138,7 +137,7 @@ Google Gemma 4 "E2B": instruction-tuned, with quantisation-aware training (QAT) 
 | Criterion | Why it fits |
 |---|---|
 | **Memory** | ~1.7 GB on the GPU, which leaves room for macOS and the browser on an 8 GB machine. 7–8 B models need ~5 GB and would swap. |
-| **Tool calling** | Native `tools` capability in Ollama. In testing it reliably picked the right tool with correct arguments. Tool calling is what makes the Task 3 integration possible. |
+| **Tool calling** | Native `tools` capability in Ollama. In testing it reliably picked the right tool with correct arguments. Tool calling is what connects the chatbot to the part search. |
 | **Quality per GB** | QAT keeps 4-bit quality close to full precision, better than post-hoc quantisation of a model of the same size. |
 | **Speed** | ~30 tok/s on the M1 GPU, which feels interactive. |
 | **Licence** | Apache 2.0. |
@@ -166,14 +165,16 @@ Rejected alternatives:
 
 ### 5.4 Version control
 The repository was created locally with `git init` on branch `main`, with **no remote**.
-Work was committed in small steps (data → Tasks 4/5 → Task 2 → Task 3 → engine → UI → tests → docs), and `git log` shows the history.
+Work was committed in small steps (data → time calculations → classification → part search → engine → UI → tests → docs), and `git log` shows the history.
 `.gitignore` excludes the virtualenv and caches.
 
 ---
 
-## 6. Task 2: Classification of `Type`
+## 6. Binary classification
 
-![Task 2 pipeline](images/task2-pipeline.png)
+Goal: predict the binary column `Type` from two tables that share the key `ID`.
+
+![Classification pipeline](images/classification-pipeline.png)
 
 ### 6.1 Data findings
 | # | Finding | Handling |
@@ -192,7 +193,7 @@ Work was committed in small steps (data → Tasks 4/5 → Task 2 → Task 3 → 
 | **Random forest ✔** | **0.932** | **0.996** | **0.967** | **0.932** | **0.936** |
 | Hist. gradient boosting | 0.910 | 0.976 | 0.919 | 0.863 | 0.898 |
 
-![Precision-recall curves and feature importance](../reports/task2/task2_results.png)
+![Precision-recall curves and feature importance](../reports/classification/results.png)
 
 - The **random forest** found 48 of 55 `n` cases (recall 0.87) with **zero false alarms** (precision 1.00), for 99.1% accuracy.
 - **`VOL` is the dominant feature:** the share of `n` is 42% when `VOL = f`, against 1.6% when `VOL = t`. `TRE`, `VBNM`, `UKL` and `NKJUD` follow.
@@ -200,7 +201,9 @@ Work was committed in small steps (data → Tasks 4/5 → Task 2 → Task 3 → 
 
 ---
 
-## 7. Task 3: Alternative parts
+## 7. Part similarity search
+
+Goal: for every part in `Parts.csv`, find the 5 most similar alternatives based on its `DESCRIPTION`.
 
 ### 7.1 Descriptive analysis
 - 998 parts (A1–A998) with 32 columns. Every structured column has 12–89% missing values.
@@ -218,7 +221,7 @@ Work was committed in small steps (data → Tasks 4/5 → Task 2 → Task 3 → 
 
 ### 7.3 Solution
 
-![Task 3 pipeline](images/task3-pipeline.png)
+![Part similarity pipeline](images/parts-pipeline.png)
 
 1. **Normalise** the text (units, dimensions, synonyms).
 2. **TF-IDF** on word 1–2-grams **and** character 3–5-grams, then cosine similarity.
@@ -260,7 +263,7 @@ Example prompts:
 
 ---
 
-## 8. Tasks 4 & 5: Hour differences
+## 8. Time calculations
 
 ![Hour difference flow](images/timediff-flow.png)
 
@@ -276,7 +279,7 @@ business_hours_between("2022/02/18 16:00", "2022/02/21 10:00")   # 2  (Fri 16–
 | Input | `YYYY/MM/DD HH:MM`; invalid input raises a clear `ValueError` |
 | Argument order | Irrelevant; the absolute difference is returned |
 | Rounding | To whole hours, **half up** (`ROUND_HALF_UP`). Python's `round()` would turn 2.5 into 2. |
-| Working hours (Task 5) | Each day is clipped to 09:00–17:00, weekends are skipped, and the overlaps are summed *before* rounding |
+| Working hours | Each day is clipped to 09:00–17:00, weekends are skipped, and the overlaps are summed *before* rounding |
 | Extras | Configurable working window and an optional `holidays` list |
 
 These functions are also available as chatbot tools, e.g. *"How many working hours are between …?"*.
@@ -287,7 +290,7 @@ These functions are also available as chatbot tools, e.g. *"How many working hou
 
 | Test file | Covers |
 |---|---|
-| `tests/test_timediff.py` | 21 cases: task example, rounding edges, reversed order, overnight, weekends, full week, leap day, holidays, invalid input |
+| `tests/test_timediff.py` | 21 cases: reference example, rounding edges, reversed order, overnight, weekends, full week, leap day, holidays, invalid input |
 | `tests/test_parts.py` | normalisation, current parsing, ranking order, self-exclusion, parts without a description, free-text search |
 | `tests/test_engine.py` | tool-call loop and error reporting, using a fake Ollama client |
 | `tests/test_app.py` | Gradio handler: streaming, tool messages, empty input |
@@ -301,20 +304,19 @@ I also tested the running app end to end through `gradio_client` and in a real b
 
 ```
 .
-├── app.py                      # Gradio chatbot (Task 1)
+├── app.py                      # Gradio chatbot
 ├── requirements.txt            # pinned dependencies
-├── task-description.txt
 ├── data/                       # Parts.csv, table_1.csv, table_2.csv
 ├── src/
 │   ├── chatbot/
 │   │   ├── engine.py           # streaming + tool-call loop (UI-independent)
 │   │   └── tools.py            # functions exposed to the LLM
-│   ├── classification/         # Task 2: data.py, train.py
-│   ├── parts/                  # Task 3: similarity.py, eda.py, evaluate.py, find_alternatives.py
-│   └── timediff/               # Tasks 4 & 5
+│   ├── classification/         # data.py, train.py
+│   ├── parts/                  # similarity.py, eda.py, evaluate.py, find_alternatives.py
+│   └── timediff/               # hour calculations
 ├── reports/
-│   ├── task2/                  # metrics.json, task2_results.png
-│   └── task3/                  # alternatives.csv, eda.txt, evaluation.txt
+│   ├── classification/         # metrics.json, results.png
+│   └── parts/                  # alternatives.csv, eda.txt, evaluation.txt
 ├── tests/                      # 33 pytest tests
 └── docs/
     ├── DOCUMENTATION.md        # this file
@@ -329,12 +331,12 @@ I also tested the running app end to end through `gradio_client` and in a real b
 - **Chatbot:**
   - A 2 B-effective model can still phrase things imperfectly, which is why the facts come from tools.
   - Retrieval over documents (RAG) and conversation memory across sessions could be added.
-- **Task 2:**
+- **Classification:**
   - hyperparameter search;
   - repeated CV for confidence intervals;
   - probability calibration if the scores are used as risks.
-- **Task 3:**
+- **Part search:**
   - user-selectable hard filters (same mounting, voltage ≥ original);
   - parse voltage and breaking capacity;
   - a small set of pairs labelled by experts, to tune the weights properly.
-- **Tasks 4/5:** time zones, DST, and regional holiday calendars (e.g. the `holidays` package).
+- **Time calculations:** time zones, DST, and regional holiday calendars (e.g. the `holidays` package).

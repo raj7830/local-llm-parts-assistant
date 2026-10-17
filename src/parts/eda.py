@@ -1,4 +1,4 @@
-"""Descriptive analysis of Parts.csv (Task 3).  Run:  python -m src.parts.eda"""
+"""Descriptive analysis of Parts.csv.  Run:  python -m src.parts.eda"""
 
 from __future__ import annotations
 

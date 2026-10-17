@@ -1,7 +1,7 @@
 """Write the 5 most similar alternatives for every part.
 
 Run:  python -m src.parts.find_alternatives [--k 5]
-Output: reports/task3/alternatives.csv (long format, one row per part/alternative)
+Output: reports/parts/alternatives.csv (long format, one row per part/alternative)
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .similarity import PartsSimilarity, load_parts
 
-OUT = Path(__file__).resolve().parents[2] / "reports" / "task3" / "alternatives.csv"
+OUT = Path(__file__).resolve().parents[2] / "reports" / "parts" / "alternatives.csv"
 
 
 def main() -> None:

@@ -1,4 +1,4 @@
-"""Task 3: find alternative parts based on the DESCRIPTION column of Parts.csv.
+"""Find alternative parts based on the DESCRIPTION column of Parts.csv.
 
 Approach (hybrid lexical + numeric):
 1. Normalise descriptions (case, unit spelling, "5 X 20mm" vs "5x20mm", synonyms).

@@ -1,7 +1,7 @@
-"""Train and evaluate classifiers for the "Type" column (Task 2).
+"""Train and evaluate classifiers for the "Type" column.
 
 Run:  python -m src.classification.train
-Writes metrics and figures to reports/task2/.
+Writes metrics and figures to reports/classification/.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from .data import CATEGORICAL, NUMERIC, load_dataset
 
-OUT_DIR = Path(__file__).resolve().parents[2] / "reports" / "task2"
+OUT_DIR = Path(__file__).resolve().parents[2] / "reports" / "classification"
 SEED = 42
 
 
@@ -180,7 +180,7 @@ def main() -> None:
     axes[1].barh(importance.feature[::-1], importance["mean"][::-1], xerr=importance["std"][::-1])
     axes[1].set(title=f"Permutation importance ({best_name})", xlabel="Drop in average precision")
     fig.tight_layout()
-    fig.savefig(OUT_DIR / "task2_results.png", dpi=120)
+    fig.savefig(OUT_DIR / "results.png", dpi=120)
 
     (OUT_DIR / "metrics.json").write_text(
         json.dumps(
@@ -194,7 +194,7 @@ def main() -> None:
             indent=2,
         )
     )
-    print(f"\nWrote {OUT_DIR / 'metrics.json'} and task2_results.png")
+    print(f"\nWrote {OUT_DIR / 'metrics.json'} and results.png")
 
 
 if __name__ == "__main__":

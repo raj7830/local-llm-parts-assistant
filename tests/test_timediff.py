@@ -8,7 +8,7 @@ from src.timediff import business_hours_between, hours_between
 @pytest.mark.parametrize(
     "start, end, expected",
     [
-        ("2022/02/15 00:05", "2022/02/15 01:00", 1),  # example from the task
+        ("2022/02/15 00:05", "2022/02/15 01:00", 1),  # reference example
         ("2017/05/13 12:00", "2017/05/13 12:00", 0),
         ("2017/05/13 12:00", "2017/05/13 12:29", 0),
         ("2017/05/13 12:00", "2017/05/13 12:30", 1),  # half rounds up

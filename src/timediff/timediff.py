@@ -1,4 +1,4 @@
-"""Task 4 & 5: hour differences between timestamps of the form ``2017/05/13 12:00``."""
+"""Hour differences between timestamps of the form ``2017/05/13 12:00``."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ def _round_hours(seconds: float) -> int:
 
 
 def hours_between(start: str | datetime, end: str | datetime) -> int:
-    """Task 4: rounded number of full hours between two timestamps.
+    """Rounded number of full hours between two timestamps.
 
     The order of the arguments does not matter; the absolute difference is returned.
 
@@ -72,7 +72,7 @@ def business_hours_between(
     workday_end: time = WORKDAY_END,
     holidays: Iterable[date] = (),
 ) -> int:
-    """Task 5: like :func:`hours_between`, but only counting 09:00–17:00 on weekdays.
+    """Like :func:`hours_between`, but only counting 09:00–17:00 on weekdays.
 
     Optionally pass ``holidays`` (dates) to exclude public holidays as well.
 

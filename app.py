@@ -1,4 +1,4 @@
-"""Local LLM chatbot (Task 1).  Start with:  python app.py"""
+"""Local LLM chatbot.  Start with:  python app.py"""
 
 from __future__ import annotations
 

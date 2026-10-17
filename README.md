@@ -22,7 +22,7 @@
   - compute (working) hours between two timestamps.
 - **Transparent.** Every tool call appears in the chat with its arguments and raw result.
 - **Easy to use.** Streaming answers, example prompts, model picker, reasoning mode, Markdown export.
-- **Data science tasks included:**
+- **Data science modules included:**
   - binary classifier (F1 0.93 on the minority class);
   - part-similarity search with a descriptive analysis.
 
@@ -56,13 +56,13 @@ python app.py        # → http://127.0.0.1:7860
 
 ## 🧩 What's inside
 
-| Task | Description | Run |
+| Component | Description | Run |
 |---|---|---|
-| **1 · Chatbot** | Local LLM chat app with tools | `python app.py` |
-| **2 · Classification** | Predict `Type` from two joined tables | `python -m src.classification.train` |
-| **3 · Similar parts** | 5 alternatives per part from `DESCRIPTION` | `python -m src.parts.find_alternatives` |
-| **4 · Hours** | Rounded hours between two timestamps | `from src.timediff import hours_between` |
-| **5 · Working hours** | Same, 09:00–17:00 on weekdays only | `from src.timediff import business_hours_between` |
+| **Chatbot** | Local LLM chat app with tools | `python app.py` |
+| **Classification** | Predict `Type` from two joined tables | `python -m src.classification.train` |
+| **Similar parts** | 5 alternatives per part from `DESCRIPTION` | `python -m src.parts.find_alternatives` |
+| **Hours** | Rounded hours between two timestamps | `from src.timediff import hours_between` |
+| **Working hours** | Same, 09:00–17:00 on weekdays only | `from src.timediff import business_hours_between` |
 
 ## 📊 Highlights
 
@@ -77,9 +77,9 @@ python app.py        # → http://127.0.0.1:7860
 ```
 app.py               Gradio chatbot
 src/chatbot/         chat engine + LLM tools
-src/classification/  Task 2
-src/parts/           Task 3
-src/timediff/        Tasks 4 & 5
+src/classification/  binary classifier
+src/parts/           part similarity search
+src/timediff/        (working) hours
 reports/             generated results
 tests/               pytest suite
 docs/                full documentation, diagrams, screenshots
@@ -97,4 +97,4 @@ The full write-up is in **[docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)**. It c
 - the architecture and request flow;
 - the machine specs;
 - why this model and these packages were chosen;
-- the data findings, methods and evaluation for every task.
+- the data findings, methods and evaluation for every component.

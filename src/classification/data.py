@@ -1,4 +1,4 @@
-"""Load, clean and merge the two tables for the binary "Type" classification (Task 2)."""
+"""Load, clean and merge the two tables for the binary "Type" classification."""
 
 from __future__ import annotations
 
